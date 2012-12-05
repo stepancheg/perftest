@@ -22,13 +22,13 @@ int main(int argc, char** argv) {
                 if (pthread_cond_signal(&cond) < 0)
                     perror("pthread_cond_signal");
                 if (pthread_mutex_unlock(&mutex) < 0)
-                    perror("pthread_mutex_lock");
+                    perror("pthread_mutex_unlock");
             }
             count += 1000000;
         }
         long long dns = 1000L * (microseconds() - start);
         long long ns_per_call = dns / count;
-        printf("%lld ns\n", ns_per_call);
+        printf("%lld ns per lock/signal/unlock\n", ns_per_call);
     }
     return 0;
 }

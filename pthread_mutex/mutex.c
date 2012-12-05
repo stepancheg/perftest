@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
         }
         long long dns = 1000L * (microseconds() - start);
         long long ns_per_call = dns / count;
-        printf("%lld ns\n", ns_per_call);
+        printf("%lld ns per lock/unlock\n", ns_per_call);
     }
     return 0;
 }
