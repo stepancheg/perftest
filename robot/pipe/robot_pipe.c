@@ -1,45 +1,44 @@
 #include <stdio.h>
+#include <unistd.h>
+#include <sys/time.h>
 #include <pthread.h>
 #include <stdbool.h>
-#include <sys/time.h>
 #include <stdlib.h>
 
 #define E(call) do { if (call < 0) { perror(#call); exit(1); }; } while (false)
 
-static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+int ltr_pipes[2];
+int rtl_pipes[2];
 
 static long long microseconds() {
     struct timeval tv;
-    E(gettimeofday(&tv, NULL));
+    if (gettimeofday(&tv, NULL) < 0)
+        perror("gettimeofday");
     return 1000000LL * tv.tv_sec + tv.tv_usec;
 }
 
-static bool current = true;
-
 static void* thread_proc(void* param) {
     bool left = (bool) param;
+    int write_pipe = left ? ltr_pipes[1] : rtl_pipes[1];
+    int read_pipe = left ? rtl_pipes[0] : ltr_pipes[0];
+    if (left)
+        E(write(write_pipe, "", 1));
     for (;;) {
         long long start = microseconds();
         long long count = 0;
         while (microseconds() - start < 1000000) {
             long long iterations = 1000;
             for (int i = 0; i < iterations; ++i) {
-                E(pthread_mutex_lock(&mutex));
-                while (current != left) {
-                    E(pthread_cond_wait(&cond, &mutex));
-                }
-                current = !left;
-                E(pthread_cond_signal(&cond));
-                E(pthread_mutex_unlock(&mutex));
-                //printf("%d\n", left);
+                char buf[1];
+                E(read(read_pipe, buf, 1));
+                E(write(write_pipe, "", 1));
             }
             count += iterations;
+            //printf("%d\n", left);
         }
         if (left) {
             long long dns = 1000L * (microseconds() - start);
             long long ns_per_call = dns / count;
-            // result is about 5us per step on Linux and 10us on FreeBSD
             printf("%lld ns per step\n", ns_per_call);
         }
     }
@@ -47,6 +46,8 @@ static void* thread_proc(void* param) {
 }
 
 int main(int argc, char** argv) {
+    E(pipe(ltr_pipes));
+    E(pipe(rtl_pipes));
     pthread_t a;
     pthread_t b;
     E(pthread_create(&a, NULL, &thread_proc, (void*) true));
