@@ -12,8 +12,7 @@ int rtl_pipes[2];
 
 static long long microseconds() {
     struct timeval tv;
-    if (gettimeofday(&tv, NULL) < 0)
-        perror("gettimeofday");
+    E(gettimeofday(&tv, NULL));
     return 1000000LL * tv.tv_sec + tv.tv_usec;
 }
 
