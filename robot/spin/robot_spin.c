@@ -28,7 +28,9 @@ static void* thread_proc(void* param) {
             long long iterations = 1000;
             for (int i = 0; i < iterations; ++i) {
                 while (__atomic_load_n(&current, __ATOMIC_SEQ_CST) != leftn * 2) {
+#ifdef USE_PAUSE
                     _mm_pause();
+#endif
                 }
                 __atomic_store_n(&current, leftn * 2 + 1, __ATOMIC_SEQ_CST);
                 //printf("%d\n", left);
