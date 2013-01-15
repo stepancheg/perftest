@@ -16,30 +16,31 @@ static long long microseconds() {
     return 1000000LL * tv.tv_sec + tv.tv_usec;
 }
 
+static const int thread_count = 8;
+
 static int current = 0;
 
 static void* thread_proc(void* param) {
-    bool left = (bool) param;
-    int leftn = left ? 1 : 0;
+    int robot_n = (int) param;
     for (;;) {
         long long start = microseconds();
         long long count = 0;
         while (microseconds() - start < 1000000) {
             long long iterations = 1000;
             for (int i = 0; i < iterations; ++i) {
-                while (__atomic_load_n(&current, __ATOMIC_SEQ_CST) != leftn * 2) {
+                while (__atomic_load_n(&current, __ATOMIC_SEQ_CST) != robot_n * 2) {
 #ifdef USE_PAUSE
                     _mm_pause();
 #endif
                 }
-                __atomic_store_n(&current, leftn * 2 + 1, __ATOMIC_SEQ_CST);
-                //printf("%d\n", left);
+                __atomic_store_n(&current, robot_n * 2 + 1, __ATOMIC_SEQ_CST);
+                //printf("%d\n", robot_n);
                 getpid();
-                __atomic_store_n(&current, (1 - leftn) * 2, __ATOMIC_SEQ_CST);
+                __atomic_store_n(&current, (robot_n + 1) % thread_count * 2, __ATOMIC_SEQ_CST);
             }
             count += iterations;
         }
-        if (left) {
+        if (robot_n == 0) {
             long long dns = 1000ll * (microseconds() - start);
             long long ns_per_call = dns / count;
             printf("%lld ns per step\n", ns_per_call);
@@ -48,12 +49,19 @@ static void* thread_proc(void* param) {
 }
 
 int main() {
-    pthread_t a;
-    pthread_t b;
-    E(pthread_create(&a, NULL, &thread_proc, (void*) true));
-    E(pthread_create(&b, NULL, &thread_proc, (void*) false));
-    E(pthread_join(a, NULL));
-    E(pthread_join(b, NULL));
+    printf("using %d threads\n", thread_count);
+#ifdef USE_PAUSE
+    printf("using pause\n");
+#else
+    printf("not using pause\n");
+#endif
+    pthread_t robots[thread_count];
+    for (int i = 0; i < thread_count; ++i) {
+        E(pthread_create(&robots[i], NULL, &thread_proc, (void*) i));
+    }
+    for (int i = 0; i < thread_count; ++i) {
+        E(pthread_join(robots[i], NULL));
+    }
     return 0;
 }
 
