@@ -28,6 +28,14 @@ long long microseconds() {
     return 1000000LL * tv.tv_sec + tv.tv_usec;
 }
 
+void nanosleep_nanos(long long ns) {
+    struct timespec req;
+    req.tv_sec = 0;
+    req.tv_nsec = ns;
+    struct timespec rem;
+    E(nanosleep(&req, &rem));
+}
+
 #if !defined(IMPL) || !(IMPL == 1 || IMPL == 2 || IMPL == 3)
 #error define IMPL to either 1 for mutex, 2 for futex, 3 for muted advanced
 #elif IMPL == 1
@@ -175,6 +183,7 @@ int main() {
             int iter = 100000;
             for (int i = 0; i < iter; ++i) {
                 latch_lock(&latch);
+                getppid(); // duration of getppid is 55 ns, git waiters a chance to wait
                 latch_unlock(&latch);
             }
             count += iter;
