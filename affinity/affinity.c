@@ -68,7 +68,7 @@ void* thread_proc(void* param) {
             count += iter;
             for (int j = 0; j < iter; ++j) {
                 bool even = j % 2 == 0;
-                array_t* array = &data[even ? 0 : 1];
+                array_t* array = &data[even ? 1 : 0];
                 if (left) {
                     for (int i = 0; i < ARRAY_SIZE; ++i) {
                         (*array)[i] = i % 100 + (even ? 0 : 1);
@@ -86,8 +86,9 @@ void* thread_proc(void* param) {
             long long dus = 1L * (microseconds() - start);
             long long us_per_call = dus / count;
             printf("%lld us per op\n", us_per_call);
+            printf("right thread cpu: %d (other thread cpu must be 0)\n", sched_getcpu());
+            printf("sum %d\n", sum);
         }
-        //printf("%s cpu %d\n", left ? "left" : "right", sched_getcpu());
     }
     return NULL;
 }
