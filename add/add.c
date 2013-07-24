@@ -41,9 +41,9 @@ int main(int argc, char** argv) {
             }
             count += batch;
         }
-        long long dns = 1000L * (microseconds() - start);
-        long long ns_per_call = dns / count;
-        printf("%lld ns per add\n", ns_per_call);
+        long long dps = 1000000L * (microseconds() - start);
+        long long ps_per_call = dps / count;
+        printf("%lld ps per add\n", ps_per_call);
     }
     return 0;
 }
