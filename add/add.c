@@ -22,7 +22,7 @@ static inline long add(long* a, long b) {
         "lock\n\t"
 #endif
         "xadd %0, %1"
-        : "+r" (b), "+m" (a)
+        : "+r" (b), "+m" (*a)
         :
         : "memory");
     return *a + b;
@@ -38,6 +38,9 @@ int main(int argc, char** argv) {
             long long batch = 10000000;
             for (int i = 0; i < batch; ++i) {
                 add(&l, 1);
+            }
+            if (__builtin_expect(l != batch, 0)) {
+                abort();
             }
             count += batch;
         }
