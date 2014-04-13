@@ -47,6 +47,7 @@ static void* thread_proc(void* param) {
 }
 
 int main(int argc, char** argv) {
+    printf("using 2 threads\n");
     pthread_t a;
     pthread_t b;
     E(pthread_create(&a, NULL, &thread_proc, (void*) true));

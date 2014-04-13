@@ -16,7 +16,7 @@ static long long microseconds() {
     return 1000000LL * tv.tv_sec + tv.tv_usec;
 }
 
-static const int thread_count = 8;
+static const int thread_count = 2;
 
 static int current = 0;
 
@@ -26,7 +26,7 @@ static void* thread_proc(void* param) {
         long long start = microseconds();
         long long count = 0;
         while (microseconds() - start < 1000000) {
-            long long iterations = 1000;
+            long long iterations = 10000;
             for (int i = 0; i < iterations; ++i) {
                 while (__atomic_load_n(&current, __ATOMIC_SEQ_CST) != robot_n * 2) {
 #ifdef USE_PAUSE
@@ -35,7 +35,6 @@ static void* thread_proc(void* param) {
                 }
                 __atomic_store_n(&current, robot_n * 2 + 1, __ATOMIC_SEQ_CST);
                 //printf("%d\n", robot_n);
-                getpid();
                 __atomic_store_n(&current, (robot_n + 1) % thread_count * 2, __ATOMIC_SEQ_CST);
             }
             count += iterations;
